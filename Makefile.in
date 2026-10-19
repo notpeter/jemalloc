@@ -438,7 +438,7 @@ TESTS_CPP_OBJS := $(TESTS_INTEGRATION_CPP_OBJS) $(TESTS_STRESS_CPP_OBJS)
 .PHONY: all dist build_doc_html build_doc_man build_doc
 .PHONY: install_bin install_include install_lib
 .PHONY: install_doc_html install_doc_man install_doc install
-.PHONY: tests check clean distclean relclean
+.PHONY: tests check check_private_namespace clean distclean relclean
 
 .SECONDARY : $(PRIVATE_NAMESPACE_GEN_HDRS) $(TESTS_OBJS) $(TESTS_CPP_OBJS)
 
@@ -566,6 +566,14 @@ $(objroot)include/jemalloc/internal/private_namespace.gen.h: $(C_SYMS)
 
 $(objroot)include/jemalloc/internal/private_namespace_jet.gen.h: $(C_JET_SYMS)
 	$(SHELL) $(srcroot)include/jemalloc/internal/private_namespace.sh $^ > $@
+
+check_private_namespace: $(PRIVATE_NAMESPACE_HDRS)
+	NM="$(NM)" AWK="$(AWK)" $(SHELL) $(srcroot)scripts/check_private_namespace.sh \
+	    normal $(objroot)include/jemalloc/internal/private_symbols.awk \
+	    $(objroot)include/jemalloc/internal/private_namespace.h $(C_SYM_OBJS)
+	NM="$(NM)" AWK="$(AWK)" $(SHELL) $(srcroot)scripts/check_private_namespace.sh \
+	    jet $(objroot)include/jemalloc/internal/private_symbols_jet.awk \
+	    $(objroot)include/jemalloc/internal/private_namespace_jet.h $(C_JET_SYM_OBJS)
 
 %.h: %.gen.h
 	@if ! `cmp -s $< $@` ; then echo "cp $< $@"; cp $< $@ ; fi
